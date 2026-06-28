@@ -43,7 +43,7 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
                     return true;
                 }
                 case "search" -> { if (args.length > 2) {
-                    handleSearchFor(sender, args[1].equalsIgnoreCase("mega"), args[2], args.length>3 ? tryConvertToInt(args[3]) : 0);
+                    handleSearchFor(sender, args[1].equalsIgnoreCase("mega"), args[2], args.length>3 ? tryConvertToInt(args[3])-1 : 0);
                     return true;
                 }}
             }
@@ -122,13 +122,13 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
     }
     public int tryConvertToInt(String input) {
         try { return Integer.parseInt(input);
-        } catch (NumberFormatException e) { return 0; }
+        } catch (NumberFormatException e) { return 1; }
     }
 
     private void handleShowCommands(CommandSender sender) {
         sender.sendMessage(Component.text("Commands for Mod Blacklist:").color(NamedTextColor.DARK_AQUA));
         Map<String, String> display = Map.of(
-                "search mega/local TERM 0-10", "Searches either the megalist or local blacklist for the term you input, with paging to not fill your chat with messages",
+                "search mega/local TERM 1-10", "Searches either the megalist or local blacklist for the term you input, with paging to not fill your chat with messages",
                 "apply MOD_ID", "Bans the inputted mod ID if available on megalist",
                 "remove MOD_ID", "Unbans the inputted mod ID",
                 "check USERNAME", "Reverifies that a player doesn't have any banned mods",
