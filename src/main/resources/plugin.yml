@@ -1,0 +1,14 @@
+name: mod-blacklist
+description: @description@
+version: '@version@'
+
+main: me.deac.modBlacklist.ModBlacklist
+api-version: '1.21'
+load: POSTWORLD
+
+authors: [ DeactivatedMan ]
+website: https://buymeacoffee.com/deactivatedman
+
+commands:
+  mb:
+    description: "Main command for Mod Blacklist plugin."
