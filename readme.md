@@ -17,3 +17,6 @@ Additionally, this plugin has a megalist which contains these translations for l
 
 - `mb check USERNAME` - Reverifies the inputted player to ensure they don't have any banned mods
 - `mb update` - Updates the megalist to the newest version from GitHub
+
+# Note
+*Please* if you have any mod bans that you want to add to the megalist.yml, then make a PR or Issue.
