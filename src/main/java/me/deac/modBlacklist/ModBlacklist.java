@@ -18,7 +18,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.*;
 
 public final class ModBlacklist extends JavaPlugin implements Listener {
-    private static final String megalistSource = "https://raw.githubusercontent.com/YourUsername/YourRepo/main/myFile.txt";
+    private static final String megalistSource = "https://raw.githubusercontent.com/DeactivatedMan/mod-blacklist/main/src/main/resources/megalist.yml";
     private static final int perPage = 20;
 
     private FileConfiguration megalistConfig;
