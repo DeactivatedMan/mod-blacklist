@@ -114,7 +114,7 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
     }
     private void handleApplyAny(CommandSender sender, String search) {
         int changed = plugin.applyAny(search);
-        boolean done = changed>0;
+        boolean done = changed!=0;
 
         sender.sendMessage(Component.text( (done ? "Successfully applied " : "Could not apply any matching "+search+", found ")+changed ).color(done ? NamedTextColor.DARK_GREEN : NamedTextColor.DARK_RED));
     }
@@ -125,7 +125,7 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
     }
     private void handleRemoveAny(CommandSender sender, String search) {
         int changed = plugin.removeAny(search);
-        boolean done = changed>0;
+        boolean done = changed!=0;
 
         sender.sendMessage(Component.text( (done ? "Successfully removed " : "Could not removed any matching "+search+", found ")+changed ).color(done ? NamedTextColor.DARK_GREEN : NamedTextColor.DARK_RED));
     }
