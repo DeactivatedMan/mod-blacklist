@@ -19,7 +19,7 @@ import java.util.*;
 
 public final class ModBlacklist extends JavaPlugin implements Listener {
     private static final String megalistSource = "https://raw.githubusercontent.com/DeactivatedMan/mod-blacklist/refs/heads/master/src/main/resources/megalist.yml";
-    private static final int perPage = 20;
+    private static final int perPage = 16;
 
     private FileConfiguration megalistConfig;
     private final Map<String, String> blacklistCache = new LinkedHashMap<>();
@@ -79,6 +79,7 @@ public final class ModBlacklist extends JavaPlugin implements Listener {
         if (!getDataFolder().exists()) getDataFolder().mkdirs();
 
         File targetFile = new File(getDataFolder(), "megalist.yml");
+        //if (!targetFile.exists()) saveResource("megalist.yml", false);
         Path targetPath = targetFile.toPath();
 
         HttpClient client = HttpClient.newHttpClient();
@@ -94,6 +95,7 @@ public final class ModBlacklist extends JavaPlugin implements Listener {
         client.sendAsync(request, HttpResponse.BodyHandlers.ofFile(
                 targetPath,
                 StandardOpenOption.CREATE,
+                StandardOpenOption.WRITE,
                 StandardOpenOption.TRUNCATE_EXISTING
         )).thenAccept(response -> {
             if (response.statusCode() == 200) getLogger().info("Successfully updated megalist from GitHub!");
@@ -116,13 +118,13 @@ public final class ModBlacklist extends JavaPlugin implements Listener {
         if (source == null || source.isEmpty()) return Collections.emptyList();
 
         List<String> matches = new ArrayList<>();
-        String query = search.toLowerCase();
 
+        boolean showAll = search.equals("*");
         int startAfter = page * perPage;
         int found = 0;
 
         for (String key : source) {
-            if (key.toLowerCase().contains(query)) {
+            if (showAll || key.toLowerCase().contains(search)) {
                 found++;
                 if (found > startAfter) matches.add(key);
                 if (matches.size() == perPage) break; // When page is full
