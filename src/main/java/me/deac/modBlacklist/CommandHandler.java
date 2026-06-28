@@ -24,7 +24,7 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(@NonNull CommandSender sender, @NonNull Command command, @NonNull String alias, String[] args) {
-        if (args[0].equals("update")) {
+        if (args.length > 0 && args[0].equals("update")) {
             handleUpdate(sender);
             return true;
         }
@@ -83,7 +83,8 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
     }
 
     private void handleUpdate(CommandSender sender) {
-        sender.sendMessage(Component.text("Downloading megalist from GitHub").color(NamedTextColor.DARK_AQUA));
+        sender.sendMessage(Component.text("Downloading megalist from GitHub...").color(NamedTextColor.DARK_AQUA));
+        plugin.updateMegalist(sender);
     }
 
     private void handleCheck(CommandSender sender, String username) {

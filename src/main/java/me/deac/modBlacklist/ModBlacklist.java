@@ -1,5 +1,9 @@
 package me.deac.modBlacklist;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -72,6 +76,14 @@ public final class ModBlacklist extends JavaPlugin implements Listener {
 
     public void checkPlayer(Player player) {
         listener.checkPlayer(player);
+    }
+    public void updateMegalist(CommandSender sender) {
+        download();
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+            File megalistFile = new File(getDataFolder(), "megalist.yml");
+            this.megalistConfig = YamlConfiguration.loadConfiguration(megalistFile);
+            sender.sendMessage(Component.text("Updated megalist!").color(NamedTextColor.DARK_GREEN));
+        }, 20L);
     }
 
     // Downloads megalist from GitHub
