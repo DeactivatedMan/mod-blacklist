@@ -1,2 +1,15 @@
-# mod_name_here: "translation_component_used_by_mod_here"
+# MOD_TAGS_MOD_NAME: "translation_component_used_by_mod_here"
+# As an example, a mod called "Bad Mod" with tags "xray" and "hacks" would be xray_hacks_bad_mod: "gui.bad_mod"
+
+# Try not to repeat yourself, if a tag word is already present in the mod name, don't include it!
+# If a mod with the same name already exists, just add a number to the end of it
+
 via_version: "gui.via_button"
+xray_orevision: "key.xray-orevision.toggle"
+atian_xray: "x13.mod.mode"
+advanced_xray: "xray.mod_name"
+xray: "key.xray.category"
+xraybx: "key.xraybx.toggle"
+mad_xray: "key.categories.madxray"
+entity_xray: "ommand.xrayentity.xray.gui"
+xray_mod_2: "category.xray"

@@ -35,7 +35,7 @@ public final class ModBlacklist extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
-        download();
+        downloadMegalist();
 
         // Load blacklist file
         //File blacklistFile = new File(getDataFolder(), "blacklist.yml");
@@ -73,12 +73,19 @@ public final class ModBlacklist extends JavaPlugin implements Listener {
     }
 
     public List<String> getBlacklist(boolean getKeys) { return new ArrayList<>( getKeys ? blacklistCache.keySet() : blacklistCache.values() ); }
+    private void saveBlacklistFile() {
+        try {
+            blacklistConfig.save(blacklistFile);
+        } catch (IOException e) {
+            getLogger().warning("Could not save blacklist.yml: " + e.getMessage());
+        }
+    }
 
     public void checkPlayer(Player player) {
-        listener.checkPlayer(player);
+        listener.checkPlayer(player, 0);
     }
     public void updateMegalist(CommandSender sender) {
-        download();
+        downloadMegalist();
         Bukkit.getScheduler().runTaskLater(this, () -> {
             File megalistFile = new File(getDataFolder(), "megalist.yml");
             this.megalistConfig = YamlConfiguration.loadConfiguration(megalistFile);
@@ -87,7 +94,7 @@ public final class ModBlacklist extends JavaPlugin implements Listener {
     }
 
     // Downloads megalist from GitHub
-    private void download() {
+    private void downloadMegalist() {
         if (!getDataFolder().exists()) getDataFolder().mkdirs();
 
         File targetFile = new File(getDataFolder(), "megalist.yml");
@@ -119,7 +126,7 @@ public final class ModBlacklist extends JavaPlugin implements Listener {
         });
     }
 
-
+    // Search functions
     public List<String> searchKeys(boolean searchMega, String search, int page) {
         return searchKeys(
                 searchMega ? megalistConfig.getKeys(false) : blacklistCache.keySet(),
@@ -127,24 +134,29 @@ public final class ModBlacklist extends JavaPlugin implements Listener {
         );
     }
     public List<String> searchKeys(Collection<String> source, String search, int page) {
+        getLogger().info("Search function called");
         if (source == null || source.isEmpty()) return Collections.emptyList();
+        getLogger().info("Collection not empty!");
 
         List<String> matches = new ArrayList<>();
 
-        boolean showAll = search.equals("*");
+        boolean all = search.equals("*");
         int startAfter = page * perPage;
         int found = 0;
 
         for (String key : source) {
-            if (showAll || key.toLowerCase().contains(search)) {
-                found++;
+            if (all || key.toLowerCase().contains(search)) { // If match
                 if (found > startAfter) matches.add(key);
                 if (matches.size() == perPage) break; // When page is full
+
+                found++;
             }
         }
+
         return matches;
     }
 
+    // Apply functions
     public boolean apply(String search) {
         // Checking memory map is O(1) fast
         if (blacklistCache.containsKey(search)) return false;
@@ -154,34 +166,84 @@ public final class ModBlacklist extends JavaPlugin implements Listener {
 
         // Apply to in-memory cache
         blacklistCache.put(search, value);
-
-        // Apply to in-memory yaml object
         blacklistConfig.set(search, value);
 
-        // Save to disk asynchronously or safely handle exception
+        // Save to blacklist.yml
         saveBlacklistFile();
         return true;
     }
+    public int applyAny(String search) {
+        if (megalistConfig == null) return 0;
 
+        if (search.equals("*")) { // Just set blacklist to megalist
+            blacklistConfig = megalistConfig;
+            blacklistCache.clear();
+            for (String key : blacklistConfig.getKeys(false)) blacklistCache.put(key, blacklistConfig.getString(key));
+
+            // Save to blacklist.yml
+            saveBlacklistFile();
+            return -1;
+        }
+        int amount = 0;
+
+        // Loop through ALL keys in the megalist
+        for (String key : megalistConfig.getKeys(false)) {
+            if (key.toLowerCase().contains(search)) { // If match
+                if (blacklistCache.containsKey(key)) continue; // If already in blacklist
+
+                String value = megalistConfig.getString(key);
+
+                // Apply
+                blacklistCache.put(key, value);
+                blacklistConfig.set(key, value);
+
+                amount++;
+            }
+        }
+
+        // Save to blacklist.yml
+        if (amount > 0) saveBlacklistFile();
+        return amount;
+    }
+
+    // Remove functions
     public boolean remove(String search) {
-        // Checking memory map is O(1) fast
-        if (!blacklistCache.containsKey(search)) return false;
+        if (blacklistCache.isEmpty() || !blacklistCache.containsKey(search)) return false;
 
-        // Remove from memory cache
+        // Remove
         blacklistCache.remove(search);
-
-        // Remove from in-memory yaml object
         blacklistConfig.set(search, null);
 
+        // Save to blacklist.yml
         saveBlacklistFile();
         return true;
     }
+    public int removeAny(String search) {
 
-    private void saveBlacklistFile() {
-        try {
-            blacklistConfig.save(blacklistFile);
-        } catch (IOException e) {
-            getLogger().warning("Could not save blacklist.yml: " + e.getMessage());
+        if (search.equals("*")) { // Entirely wipe blacklist
+            blacklistCache.clear();
+            blacklistConfig = new YamlConfiguration();
+
+            // Save to blacklist.yml
+            saveBlacklistFile();
+            return -1;
         }
+
+        int amount = 0;
+
+        // Loop through ALL keys in the blacklist
+        for (String key : blacklistCache.keySet()) {
+            if (key.toLowerCase().contains(search)) {
+                // Remove
+                blacklistCache.remove(key);
+                blacklistConfig.set(key, null);
+
+                amount++;
+            }
+        }
+
+        // Save to blacklist.yml
+        saveBlacklistFile();
+        return amount;
     }
 }

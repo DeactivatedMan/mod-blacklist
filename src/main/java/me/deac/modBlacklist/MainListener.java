@@ -42,40 +42,48 @@ public class MainListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         plugin.getLogger().info("Showing player a sign in 20 ticks");
-        Bukkit.getScheduler().runTaskLater(plugin, () -> checkPlayer(player), 20L);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> checkPlayer(player, 0), 20L);
     }
 
-    public void checkPlayer(Player player) {
+    public void checkPlayer(Player player, int index) {
         List<String> blacklist = plugin.getBlacklist(false);
+        if (blacklist.size() <= index) {
+            plugin.getLogger().info("Player " + player.getName() + " ("+player.getUniqueId()+") has been verified clear!");
+            return;
+        }
+
         Location loc = player.getLocation().getBlock().getLocation();
-        BlockData airData = Material.AIR.createBlockData();
         UUID uuid = player.getUniqueId();
 
-        for (int i = 0; i < blacklist.size(); i += 4) {
-            CheckRecord record = checkCache.getIfPresent(uuid);
-            if (record != null && record.index == -1) return; // Checks if player has been kicked
+        //for (int i = 0; i < blacklist.size(); i += 4) {
+            //CheckRecord record = checkCache.getIfPresent(uuid);
+            //if (record != null && record.index == -1) return; // Checks if player has been kicked
 
-            // Get list of 4 values
-            List<String> rawChunk = blacklist.subList(i, Math.min(i + 4, blacklist.size()));
-            plugin.getLogger().info(rawChunk.toString());
-
-            // Append empty strings if not full 4
-            List<String> chunk = new ArrayList<>(rawChunk);
-            while (chunk.size() < 4) chunk.add("");
-            plugin.getLogger().info(chunk.toString());
-
-            // Update cache and make list of components
-            checkCache.put(uuid, new CheckRecord(i, chunk));
-            List<@NotNull TranslatableComponent> lines = chunk.stream().map(Component::translatable).toList();
-
-            // Open+close virtual sign
-            player.sendBlockChange(loc, Material.OAK_SIGN.createBlockData());
-            plugin.getLogger().info("showing sign");
-            player.sendSignChange(loc, lines);
-            player.openVirtualSign(Position.fine(loc.getX(), loc.getY(), loc.getZ()), Side.FRONT);
-            plugin.getLogger().info("removing sign");
-            player.sendBlockChange(loc, airData);
+        // Get list of 4 values
+        List<String> rawChunk = blacklist.subList(index, Math.min(index + 4, blacklist.size()));
+        if (rawChunk.isEmpty()) {
+            plugin.getLogger().info("Player " + player.getName() + " ("+player.getUniqueId()+") has been verified clear!");
+            return;
         }
+        plugin.getLogger().info("Raw chunk data: " + rawChunk);
+
+        // Append empty strings if not full 4
+        List<String> chunk = new ArrayList<>(rawChunk);
+        while (chunk.size() < 4) chunk.add("");
+        plugin.getLogger().info("Standard chunk data: " + chunk);
+
+        // Update cache and make list of components
+        checkCache.put(uuid, new CheckRecord(index, chunk));
+        List<@NotNull TranslatableComponent> lines = chunk.stream().map(Component::translatable).toList();
+
+        // Open sign with translation data
+        player.sendBlockChange(loc, Material.OAK_SIGN.createBlockData());
+        plugin.getLogger().info("showing sign");
+        player.sendSignChange(loc, lines);
+        player.openVirtualSign(Position.fine(loc.getX(), loc.getY(), loc.getZ()), Side.FRONT);
+        plugin.getLogger().info("removing sign");
+        //}
+        // Resync block
         player.sendBlockChange(loc, loc.getBlock().getBlockData());
     }
 
@@ -97,26 +105,28 @@ public class MainListener implements Listener {
                     return PlainTextComponentSerializer.plainText().serialize(component);
                 })
                 .toList();
+        plugin.getLogger().info("Sign returned with data: " + values);
 
         UUID uuid = player.getUniqueId();
 
         CheckRecord fromCache = checkCache.getIfPresent(uuid);
+        int cacheIndex = fromCache == null ? -1 : fromCache.index;
         List<String> cacheValues = fromCache == null ? new ArrayList<>() : fromCache.values;
 
         if (fromCache != null && !values.equals(cacheValues)) {
             for (int i=0; i<Math.min(values.size(), cacheValues.size()); i++) {
                 if (!values.get(i).equals(cacheValues.get(i))) {
-                    String name = plugin.getBlacklist(true).get(fromCache.index + i);
+                    String name = plugin.getBlacklist(true).get(cacheIndex + i);
 
                     plugin.getLogger().info("Player "+player.getName()+" ( "+uuid+" ) has blacklisted mod " + name);
-                    checkCache.put(uuid, new CheckRecord(-1, null));
+                    event.setCancelled(true);
                     player.kick(Component.text("Blacklisted mod "+name+" installed"), PlayerKickEvent.Cause.PLUGIN);
-
-                    break;
+                    return;
                 }
             }
         }
 
         event.setCancelled(true);
+        if (cacheIndex != -1) checkPlayer(player, cacheIndex+4);
     }
 }
