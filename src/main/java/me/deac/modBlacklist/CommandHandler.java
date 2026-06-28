@@ -24,18 +24,32 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(@NonNull CommandSender sender, @NonNull Command command, @NonNull String alias, String[] args) {
-        if (args.length < 2) handleShowCommands(sender);
-        else {
+        if (args[0].equals("update")) {
+            handleUpdate(sender);
+            return true;
+        }
+        else if (args.length > 1) {
             switch (args[0]) {
-                case "apply" -> handleApply(sender, args[1]);
-                case "remove" -> handleRemove(sender, args[1]);
-                case "check" -> handleCheck(sender, args[1]);
-                case "search" -> {
-                    if (args.length > 2) handleSearchFor(sender, args[1].equalsIgnoreCase("mega"), args[2], args.length>3 ? tryConvertToInt(args[3]) : 0);
-                    else handleShowCommands(sender);
+                case "apply" -> {
+                    handleApply(sender, args[1]);
+                    return true;
                 }
+                case "remove" -> {
+                    handleRemove(sender, args[1]);
+                    return true;
+                }
+                case "check" -> {
+                    handleCheck(sender, args[1]);
+                    return true;
+                }
+                case "search" -> { if (args.length > 2) {
+                    handleSearchFor(sender, args[1].equalsIgnoreCase("mega"), args[2], args.length>3 ? tryConvertToInt(args[3]) : 0);
+                    return true;
+                }}
             }
         }
+
+        handleShowCommands(sender);
         return true;
     }
 
@@ -48,7 +62,7 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
 
     @Override
     public List<String> onTabComplete(@NonNull CommandSender sender, @NonNull Command command, @NonNull String alias, String[] args) {
-        List<String> commands = List.of("search", "apply", "remove", "check");
+        List<String> commands = List.of("search", "apply", "remove", "check", "update");
 
         if (args.length == 1) return StringUtil.copyPartialMatches(args[0], commands, new ArrayList<>());
 
@@ -66,6 +80,10 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
         }
 
         return commands;
+    }
+
+    private void handleUpdate(CommandSender sender) {
+        sender.sendMessage(Component.text("Downloading megalist from GitHub").color(NamedTextColor.DARK_AQUA));
     }
 
     private void handleCheck(CommandSender sender, String username) {
@@ -112,7 +130,8 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
                 "search mega/local TERM 0-10", "Searches either the megalist or local blacklist for the term you input, with paging to not fill your chat with messages",
                 "apply MOD_ID", "Bans the inputted mod ID if available on megalist",
                 "remove MOD_ID", "Unbans the inputted mod ID",
-                "check USERNAME", "Reverifies that a player doesn't have any banned mods"
+                "check USERNAME", "Reverifies that a player doesn't have any banned mods",
+                "update", "Updates the megalist to newest version from GitHub"
         );
         display.forEach((key, value) -> sender.sendMessage(
                 Component.text(" - ").color(NamedTextColor.GRAY)
